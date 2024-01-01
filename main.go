@@ -33,11 +33,11 @@ func main() {
 	dboard := board(filename)
 
 	/*
-	dboard = [][]int{
-		{1, 2, 3},
-		{4, 5, 6},
-		{7, 8, 9},
-	}
+		dboard = [][]int{
+			{1, 2, 3},
+			{4, 5, 6},
+			{7, 8, 9},
+		}
 	*/
 
 	// expand
@@ -53,10 +53,30 @@ func main() {
 			expandedDBoard[i+1][j+1] = value
 			expandedDBoardVars[i+1][j+1] = seq()
 
-			fmt.Print(expandedDBoardVars[i+1][j+1]," ")
 		}
-		fmt.Println()
 	}
+
+	// ==== for later check//
+	file, err := os.Create("tvars")
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	for i, row := range expandedDBoardVars {
+		line := ""
+		for j, v := range row {
+			if i == 0 || j == 0 || i == len(expandedDBoard)-1 || j == len(row)-1 {
+				continue
+			}
+			line += strconv.Itoa(v) + " "
+		}
+		_, err := file.WriteString(line + "\n")
+		if err != nil {
+			panic(err)
+		}
+	}
+	// ==== //
 
 	// add -1 to new cells for expansion
 	for i, v := range expandedDBoard {
@@ -71,62 +91,62 @@ func main() {
 	}
 
 	for i, v := range expandedDBoard {
-		for j,vv := range v {
+		for j, vv := range v {
 			if vv == -1 {
 				continue
 			}
 
 			// vars around target cell
 			tVars := []int{}
-			for ii := -1; ii <=1 ; ii++ {
-				for jj := -1; jj <=1 ; jj++ {
+			for ii := -1; ii <= 1; ii++ {
+				for jj := -1; jj <= 1; jj++ {
 					tVars = append(tVars, expandedDBoardVars[i+ii][j+jj])
 				}
 			}
 			// Determine
 			if vv == 0 {
-				for _,v := range tVars {
-					clauses = append(clauses,Clause{-v})
+				for _, v := range tVars {
+					clauses = append(clauses, Clause{-v})
 				}
 				continue
 			}
 			// Determine
 			if vv == 9 {
-				for _,v := range tVars {
-					clauses = append(clauses,Clause{v})
+				for _, v := range tVars {
+					clauses = append(clauses, Clause{v})
 				}
 				continue
 			}
 
 			if vv == 8 {
-				c:=[]int{}
-				for _,v := range tVars {
-					c = append(c,-v)
+				c := []int{}
+				for _, v := range tVars {
+					c = append(c, -v)
 				}
-				clauses = append(clauses,c)
+				clauses = append(clauses, c)
 			}
 
 			// true isNot Positive
 			for k := vv; k < 8; k++ {
-				 comb(k+1,9-(k+1), false, tVars)
+				comb(k+1, 9-(k+1), false, tVars)
 			}
 
 			if vv == 1 {
-				c:=[]int{}
-				for _,v := range tVars {
-					c = append(c,v)
+				c := []int{}
+				for _, v := range tVars {
+					c = append(c, v)
 				}
-				clauses = append(clauses,c)
+				clauses = append(clauses, c)
 			}
 
 			// false is Postive
-			for k := 9-vv; k < 8; k++ {
-				 comb(k+1,9-(k+1), true, tVars)
+			for k := 9 - vv; k < 8; k++ {
+				comb(k+1, 9-(k+1), true, tVars)
 			}
 		}
 	}
 
-		cnf := clausesToString(clauses, seq()-1)
+	cnf := clausesToString(clauses, seq()-1)
 
 	// Save the CNF to a text file
 	fOut := "r_cnf.txt"
@@ -179,7 +199,7 @@ func first(n int) uint {
 }
 
 // n1+n2 C n1
-func comb(n1, n2 int, isPostive bool, tVars[]int/*9*/ ) {
+func comb(n1, n2 int, isPostive bool, tVars []int /*9*/) {
 	var (
 		j, k                                int
 		x, s                                uint
