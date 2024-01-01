@@ -20,13 +20,13 @@ func intSeq() func() int {
 	}
 }
 
-var seq intSeq
+var seq = intSeq()
 
 func main() {
 	// 拡張版と通常版を保持
 	// 拡張版のみに変数を追加、ただわかりやすいように通常版も拡張と同じにする
 	// sliceを拡張するためのコピー元を持つときに全てfalseとしておく。
-		if len(os.Args) < 2 {
+	if len(os.Args) < 2 {
 		fmt.Println("Usage: sudoku <filename>")
 		os.Exit(1)
 	}
@@ -36,70 +36,153 @@ func main() {
 
 	dboard := board(filename)
 
-	// expand 
-    expandedDBoard := make([][]int, len(dboard)+2)
-    expandedDBoardVars := make([][]int, len(dboard)+2)
-    for i := range expandedDBoard {
-        expandedDBoard[i] = make([]int, len(dboard[0])+2)
-        expandedDBoardVars[i] = make([]int, len(dboard[0])+2)
-	//TODOここに全てfalseが入るようにする+ -1 を入れる
-    }
+	/*
+	dboard = [][]int{
+		{1, 2, 3},
+		{4, 5, 6},
+		{7, 8, 9},
+	}
+	*/
 
-    // 元のスライスの要素を新しいスライスにコピー
-    for i, row := range dboard {
-        for j, value := range row {
-            expandedDBoard[i+1][j+1] = value
-	    expandedDBoardVars[i+1][j+i] = seq()
-        }
-    }
+	// expand
+	expandedDBoard := make([][]int, len(dboard)+2)
+	expandedDBoardVars := make([][]int, len(dboard)+2)
+	for i := range expandedDBoard {
+		expandedDBoard[i] = make([]int, len(dboard[0])+2)
+		expandedDBoardVars[i] = make([]int, len(dboard[0])+2)
+		//TODOここに全てfalseが入るようにする+ -1 を入れる
+	}
 
-    // 端をマイナス1にする、varsのはじをマイナスにする
-    for i,v := range expandedDBoard {
-	    for j,vv := range v {
-	    }
-    }
-	fmt.Println(len(dboard[0]))
+	// 元のスライスの要素を新しいスライスにコピー
+	for i, row := range dboard {
+		for j, value := range row {
+			expandedDBoard[i+1][j+1] = value
+			expandedDBoardVars[i+1][j+1] = seq()
+		}
+	}
+
+	// 端をマイナス1にする、varsのはじをマイナスにする
+	for i, v := range expandedDBoard {
+		for j := range v {
+			if i == 0 || j == 0 || i == len(expandedDBoard)-1 || j == len(v)-1 {
+				expandedDBoard[i][j] = -1
+				t := seq()
+				expandedDBoardVars[i][j] = t
+				clauses = append(clauses, Clause{-t})
+			}
+		}
+	}
+
+	for i, v := range expandedDBoard {
+		for j,vv := range v {
+			if vv == -1 {
+				continue
+			}
+
+			// vars around target cell
+			tVars := []int{}
+			for ii := -1; ii <=1 ; ii++ {
+				for jj := -1; jj <=1 ; jj++ {
+					tVars = append(tVars, expandedDBoardVars[i+ii][j+jj])
+				}
+			}
+			// Determine
+			if vv == 0 {
+				for _,v := range tVars {
+					clauses = append(clauses,Clause{-v})
+				}
+				continue
+			}
+			// Determine
+			if vv == 9 {
+				for _,v := range tVars {
+					clauses = append(clauses,Clause{v})
+				}
+				continue
+			}
+
+			if vv == 8 {
+				c:=[]int{}
+				for _,v := range tVars {
+					c = append(c,-v)
+				}
+				clauses = append(clauses,c)
+			}
+
+			// true isNot Positive
+			for k := vv; k < 8; k++ {
+				 comb(k+1,9-(k+1), false, tVars)
+			}
+
+			if vv == 1 {
+				c:=[]int{}
+				for _,v := range tVars {
+					c = append(c,v)
+				}
+				clauses = append(clauses,c)
+			}
+
+			// false is Postive
+			for k := 9-vv; k < 8; k++ {
+				 comb(k+1,9-(k+1), true, tVars)
+			}
+		}
+	}
+
+		cnf := clausesToString(clauses, seq()-1)
+
+	// Save the CNF to a text file
+	fOut := "r_cnf.txt"
+	if err := os.WriteFile(fOut, []byte(cnf), 0644); err != nil {
+		fmt.Println("Error writing to file:", err)
+		return
+	}
+	fmt.Println("CNF file generated successfully:", fOut)
+
+	// fmt.Println(len(dboard[0]))
+	// fmt.Println(expandedDBoard)
+	// fmt.Println(expandedDBoardVars)
 	// fmt.Println(len(dboard[2]))
 	// fmt.Println(len(dboard[3]))
 	// fmt.Println(len(dboard[16]))
 
+	// TODO clausesからsat txtを作る
+
 	/*
- // 3x3のスライスを定義
-    original := [][]int{
-        {1, 2, 3},
-        {4, 5, 6},
-        {7, 8, 9},
-    }
+		 // 3x3のスライスを定義
+		    original := [][]int{
+		        {1, 2, 3},
+		        {4, 5, 6},
+		        {7, 8, 9},
+		    }
 
-    // 5x5の新しいスライスを初期化
-    expanded := make([][]int, 5)
-    for i := range expanded {
-        expanded[i] = make([]int, 5)
-	//TODOここに全てfalseが入るようにする+ -1 を入れる
-    }
+		    // 5x5の新しいスライスを初期化
+		    expanded := make([][]int, 5)
+		    for i := range expanded {
+		        expanded[i] = make([]int, 5)
+			//TODOここに全てfalseが入るようにする+ -1 を入れる
+		    }
 
-    // 元のスライスの要素を新しいスライスにコピー
-    for i, row := range original {
-        for j, value := range row {
-            expanded[i+1][j+1] = value
-        }
-    }
+		    // 元のスライスの要素を新しいスライスにコピー
+		    for i, row := range original {
+		        for j, value := range row {
+		            expanded[i+1][j+1] = value
+		        }
+		    }
 
-    // 結果を表示
-    fmt.Println("Original Slice:")
-    for _, row := range original {
-        fmt.Println(row)
-    }
+		    // 結果を表示
+		    fmt.Println("Original Slice:")
+		    for _, row := range original {
+		        fmt.Println(row)
+		    }
 
-    fmt.Println("\nExpanded Slice:")
-    for _, row := range expanded {
-        fmt.Println(row)
-    }
+		    fmt.Println("\nExpanded Slice:")
+		    for _, row := range expanded {
+		        fmt.Println(row)
+		    }
 	*/
 
 }
-
-
 
 func board(fName string) [][]int {
 	var sudoku [][]int
@@ -110,7 +193,6 @@ func board(fName string) [][]int {
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
-
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -133,9 +215,65 @@ func board(fName string) [][]int {
 		os.Exit(1)
 	}
 
-	for _, row := range sudoku {
-		fmt.Println(row)
-	}
+	// for _, row := range sudoku {
+	// 	fmt.Println(row)
+	// }
 	return sudoku
 }
 
+func first(n int) uint {
+	return (1 << n) - 1
+}
+
+// n1+n2 C n1
+func comb(n1, n2 int, isPostive bool, tVars[]int/*9*/ ) {
+	var (
+		j, k                                int
+		x, s                                uint
+		smallest, ripple, newSmallest, ones uint
+	)
+
+	m := make([]int, n1+1)
+
+	x = first(n1)
+	for (x & ^first(n1+n2)) == 0 {
+		s = x
+		k = 1
+		for j = 1; j <= n1+n2; j++ {
+			if s&1 != 0 {
+				m[k] = j
+				k++
+			}
+			s >>= 1
+		}
+		c := Clause{}
+		for k = 1; k <= n1; k++ {
+			if isPostive {
+				// m[k] = 1 ~ max + 1
+				c = append(c, tVars[m[k]-1])
+			} else {
+				c = append(c, -tVars[m[k]-1])
+			}
+			// fmt.Printf(" %2d", m[k])
+		}
+		clauses = append(clauses, c)
+
+		smallest = x & -x
+		ripple = x + smallest
+		newSmallest = ripple & -ripple
+		ones = ((newSmallest / smallest) >> 1) - 1
+		x = ripple | ones
+	}
+}
+
+func clausesToString(clauses []Clause, varCount int) string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("p cnf %d %d\n", varCount, len(clauses)))
+	for _, clause := range clauses {
+		for _, lit := range clause {
+			sb.WriteString(fmt.Sprintf("%d ", lit))
+		}
+		sb.WriteString("0\n")
+	}
+	return sb.String()
+}
