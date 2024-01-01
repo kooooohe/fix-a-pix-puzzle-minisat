@@ -158,7 +158,7 @@ func main() {
 }
 
 func board(fName string) [][]int {
-	var sudoku [][]int
+	var board [][]int
 	file, err := os.Open(fName)
 	if err != nil {
 		fmt.Printf("Error opening file: %s\n", err)
@@ -180,7 +180,7 @@ func board(fName string) [][]int {
 			}
 			row = append(row, num)
 		}
-		sudoku = append(sudoku, row)
+		board = append(board, row)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -188,10 +188,10 @@ func board(fName string) [][]int {
 		os.Exit(1)
 	}
 
-	// for _, row := range sudoku {
+	// for _, row := range board {
 	// 	fmt.Println(row)
 	// }
-	return sudoku
+	return board
 }
 
 func first(n int) uint {
