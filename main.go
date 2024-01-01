@@ -24,7 +24,7 @@ var seq = intSeq()
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: sudoku <filename>")
+		fmt.Println("Usage: puzzle <filename>")
 		os.Exit(1)
 	}
 
