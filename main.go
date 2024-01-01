@@ -23,16 +23,12 @@ func intSeq() func() int {
 var seq = intSeq()
 
 func main() {
-	// 拡張版と通常版を保持
-	// 拡張版のみに変数を追加、ただわかりやすいように通常版も拡張と同じにする
-	// sliceを拡張するためのコピー元を持つときに全てfalseとしておく。
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: sudoku <filename>")
 		os.Exit(1)
 	}
 
 	filename := os.Args[1]
-	// baseClauses := generateClauses()
 
 	dboard := board(filename)
 
@@ -50,18 +46,19 @@ func main() {
 	for i := range expandedDBoard {
 		expandedDBoard[i] = make([]int, len(dboard[0])+2)
 		expandedDBoardVars[i] = make([]int, len(dboard[0])+2)
-		//TODOここに全てfalseが入るようにする+ -1 を入れる
 	}
 
-	// 元のスライスの要素を新しいスライスにコピー
 	for i, row := range dboard {
 		for j, value := range row {
 			expandedDBoard[i+1][j+1] = value
 			expandedDBoardVars[i+1][j+1] = seq()
+
+			fmt.Print(expandedDBoardVars[i+1][j+1]," ")
 		}
+		fmt.Println()
 	}
 
-	// 端をマイナス1にする、varsのはじをマイナスにする
+	// add -1 to new cells for expansion
 	for i, v := range expandedDBoard {
 		for j := range v {
 			if i == 0 || j == 0 || i == len(expandedDBoard)-1 || j == len(v)-1 {
@@ -138,50 +135,6 @@ func main() {
 		return
 	}
 	fmt.Println("CNF file generated successfully:", fOut)
-
-	// fmt.Println(len(dboard[0]))
-	// fmt.Println(expandedDBoard)
-	// fmt.Println(expandedDBoardVars)
-	// fmt.Println(len(dboard[2]))
-	// fmt.Println(len(dboard[3]))
-	// fmt.Println(len(dboard[16]))
-
-	// TODO clausesからsat txtを作る
-
-	/*
-		 // 3x3のスライスを定義
-		    original := [][]int{
-		        {1, 2, 3},
-		        {4, 5, 6},
-		        {7, 8, 9},
-		    }
-
-		    // 5x5の新しいスライスを初期化
-		    expanded := make([][]int, 5)
-		    for i := range expanded {
-		        expanded[i] = make([]int, 5)
-			//TODOここに全てfalseが入るようにする+ -1 を入れる
-		    }
-
-		    // 元のスライスの要素を新しいスライスにコピー
-		    for i, row := range original {
-		        for j, value := range row {
-		            expanded[i+1][j+1] = value
-		        }
-		    }
-
-		    // 結果を表示
-		    fmt.Println("Original Slice:")
-		    for _, row := range original {
-		        fmt.Println(row)
-		    }
-
-		    fmt.Println("\nExpanded Slice:")
-		    for _, row := range expanded {
-		        fmt.Println(row)
-		    }
-	*/
-
 }
 
 func board(fName string) [][]int {
